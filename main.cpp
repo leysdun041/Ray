@@ -4,15 +4,18 @@
 #include <cstring>
 #include <iostream>
 
-//#include <unistd.h>
+#include <unistd.h>
 #include "functions.cpp"
 #define PI 3.14159265358979323846
 using namespace std;
+using namespace ray;
 
 // screen dimensions
-
 #define WIDTH 800
 #define HEIGHT 600
+
+//Create a namespace
+namespace ray{
 
 // width and height of each character in pixels
 const int dW = 4, dH = 8;
@@ -70,7 +73,7 @@ public:
     matrix[14] = z;
 
     // invert
-    invert(inv, matrix);
+    ray::invert(inv, matrix);
   }
   double rayTrace(double origin[3], double unit[3], ball balls[], int n,
                   double altitute, double coeff, int limit) {
@@ -81,12 +84,12 @@ public:
     double distance;
     for (int i = 0; i < n; i++) {
       double diff[3];
-      vector(diff, origin, balls[i].center);
-      double discriminant = dot(unit, diff) * dot(unit, diff) +
+      ray::vector(diff, origin, balls[i].center);
+      double discriminant = ray::dot(unit, diff) * ray::dot(unit, diff) +
                             balls[i].radius * balls[i].radius - dot(diff, diff);
       if (discriminant < 0)
         continue;
-      distance = -dot(unit, diff) - sqrt(discriminant);
+      distance = -ray::dot(unit, diff) - sqrt(discriminant);
       if (distance <= 0)
         continue;
       index = i;
@@ -99,7 +102,7 @@ public:
       {
         double tx = origin[0] + distanceToPlane * unit[0],
                ty = origin[1] + distanceToPlane * unit[1];
-        double color = clamp(1 / (1 + distanceToPlane / 10), 0, 1);
+        double color = ray::clamp(1 / (1 + distanceToPlane / 10), 0, 1);
         double origin2[3] = {origin[0] + distanceToPlane * unit[0],
                              origin[1] + distanceToPlane * unit[1],
                              origin[2] + distanceToPlane * unit[2]};
@@ -124,12 +127,12 @@ public:
                          origin[1] + unit[1] * distance,
                          origin[2] + unit[2] * distance};
     double normal[3];
-    vector(normal, origin2, balls[index].center);
-    normalize(normal);
-    double k = 2 * dot(unit, normal);
-    scale(normal, k);
+    ray::vector(normal, origin2, balls[index].center);
+    ray::normalize(normal);
+    double k = 2 * ray::dot(unit, normal);
+    ray::scale(normal, k);
     double unit2[3];
-    vector(unit2, unit, normal);
+    ray::vector(unit2, unit, normal);
     if (limit == 0)
       return balls[index].color;
     return (1 - balls[index].coeff) * balls[index].color +
@@ -137,6 +140,9 @@ public:
                rayTrace(origin2, unit2, balls, n, altitute, coeff, limit - 1);
   }
 };
+
+//End namespace ray
+}
 
 int main() {
   // ball declaration::
@@ -185,11 +191,11 @@ int main() {
             -((double)(j - WIDTH / dW / 2) + 0.5) / (double)(WIDTH / dW / 2),
             ((double)(i - HEIGHT / dH / 2) + 0.5) / (double)(WIDTH / dH / 2),
             -1};
-        transformVector(unit, cam.matrix);
+        ray::transformVector(unit, cam.matrix);
         unit[0] -= cam.x;
         unit[1] -= cam.y;
         unit[2] -= cam.z;
-        normalize(unit);
+        ray::normalize(unit);
         double luminance = cam.rayTrace(origin, unit, balls, 3, 2, 0.3, 5);
         int color = (int)((strlen(palette) - 1) * luminance);
         platno[p++] = palette[color];
@@ -204,7 +210,7 @@ int main() {
 
     // sleeping to reduce frames count
     // maybe there is a better way than sleeping to sync
-    Sleep(5);
+    sleep(5);
 
     // instead of system("cls") i used this because it looks smoother
     gotoxy(0, 0);
